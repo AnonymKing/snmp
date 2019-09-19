@@ -32,6 +32,7 @@ def load_ip_list():
         return False
 
 
+# 过滤掉非教育网IP
 def limit_cernet(route_list):
     routes = []
     for item in route_list:
@@ -40,6 +41,7 @@ def limit_cernet(route_list):
     return routes
 
 
+# 过滤掉非国内IP
 def limit_china(route_list):
     routes = []
     for item in route_list:
@@ -51,6 +53,7 @@ def limit_china(route_list):
     return routes
 
 
+# 整理数据
 def sort_data():
     try:
         print(len(result_list))
@@ -70,6 +73,7 @@ def sort_data():
         return False
 
 
+# 保存数据到指定文件
 def save_data():
     try:
         with open("./data/data.json", "w+") as fp:

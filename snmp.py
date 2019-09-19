@@ -50,7 +50,6 @@ def get_trace(ip, retry=2):
     global Debug
     dport = [3389, 22, 80]
     ans, _ = traceroute(ip, maxttl=30, timeout=3, dport=dport[retry], verbose=Debug)
-    # print("Ans:", ans.get_trace())
     trace = ans.get_trace()[ip]
     res = False
     for k in trace.keys():
@@ -131,6 +130,7 @@ if __name__ == '__main__':
     in_queue = multiprocessing.JoinableQueue(maxsize=queue_size)
     out_queue = multiprocessing.JoinableQueue(maxsize=queue_size)
 
+    # read data from file
     fp = open("ip.list", "r")
     ip_list = fp.readlines()
     fp.close()
@@ -164,5 +164,6 @@ if __name__ == '__main__':
         p.join()
     thread.join()
 
+    # close database
     my_client.close()
     print("Scan Host Over!")
