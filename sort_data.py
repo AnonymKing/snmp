@@ -5,11 +5,11 @@
 import IPy
 import json
 from pymongo import MongoClient
-from conf import DB_URL
+from conf import DB_URL, dbname, setname
 
 my_client = MongoClient(DB_URL)
-my_db = my_client.get_database("dbname")
-my_set = my_db.get_collection("ip_info")
+my_db = my_client.get_database(dbname)
+my_set = my_db.get_collection(setname)
 result = my_set.find()
 result_list = list(result[:])
 ip_list = IPy.IPSet()

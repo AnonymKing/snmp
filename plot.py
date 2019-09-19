@@ -34,7 +34,7 @@ def init_data():
 
 
 def plot():
-    geo = Geo(init_opts=opts.InitOpts(width="96vw", height="96vh",
+    geo = Geo(init_opts=opts.InitOpts(width="96vw", height="96vh", page_title="教育网拓扑图",
                                       animation_opts=opts.AnimationOpts(animation=False)))
 
     geo.add_schema(maptype="china")

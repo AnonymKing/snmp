@@ -8,16 +8,17 @@ from pymongo import MongoClient
 import threading
 import multiprocessing
 import IPLocate
-from conf import DB_URL
+from conf import DB_URL, dbname, setname, ip_db_path
 
 Debug = False
 my_client = MongoClient(DB_URL)
-my_db = my_client.get_database("dbname")
-my_set = my_db.get_collection("ip_info")
+my_db = my_client.get_database(dbname)
+my_set = my_db.get_collection(setname)
 ip_db = IPLocate.IP()
-ip_db.load_dat("./data/埃文科技IP数据库.dat")
+ip_db.load_dat(ip_db_path)
 
 
+# 获取指定IP的经纬度信息
 def get_point(ip):
     if IPy.IP(ip).iptype() == "PRIVATE":
         return (122.089909, 37.540047)
@@ -28,10 +29,11 @@ def get_point(ip):
         return tuple((float(ip_db.locate_ip(ip)[9]), float(ip_db.locate_ip(ip)[10])))
 
 
+# 判断指定IP的存活情况
 def is_alive(ip):
     global Debug
+    # 发送SYN包
     ans, _ = sr(IP(dst=ip) / TCP(dport=80, flags="S"), timeout=3, verbose=Debug)
-    # ans, _ = sr(IP(dst=ip) / ICMP(), timeout=2, verbose=Debug)
     if ans:
         for _, rcv in ans:
             if rcv.src == ip:
@@ -41,6 +43,9 @@ def is_alive(ip):
         return False
 
 
+# 使用TCP实现的traceroute
+# 递归实现对不同端口的三次重试
+# 获取对应主机的路径信息
 def get_trace(ip, retry=2):
     global Debug
     dport = [3389, 22, 80]
@@ -75,6 +80,7 @@ def get_trace(ip, retry=2):
         return True, data
 
 
+# 保存数据到数据库
 def save_ip(trace, point):
     global my_set
     ip_info = {
@@ -82,11 +88,11 @@ def save_ip(trace, point):
         "point": point,
         "trace": trace["trace"]
     }
-    # print("update!")
     # $setOnInsert 作用：不存在才插入数据
     my_set.update_one({'dst': trace["ip"]}, {'$setOnInsert': ip_info}, upsert=True)
 
 
+# 生产者
 def worker(in_queue, out_queue):
     while True:
         ip = in_queue.get()
@@ -95,21 +101,17 @@ def worker(in_queue, out_queue):
         try:
             ip_active = is_alive(ip)
             if ip_active:
-                # print(ip)
-                # print("Alive", end=" ")
                 point = get_point(ip)
                 res, data = get_trace(ip)
                 if res:
                     out_queue.put((data, point))
-                    # print("Succ", end=" ")
-                # print()
-        except:
-            # traceback.print_exc()
-            pass
+        except Exception as err:
+            print(err)
         finally:
             in_queue.task_done()
 
 
+# 消费者 过一段时间就查看是否有输出
 def get_result(out_queue):
     while True:
         res = out_queue.get()
